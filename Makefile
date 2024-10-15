@@ -20,15 +20,15 @@ INC := -I include $(LIBINC)
 OBJECTS := $(OBJECTS) $(LIBOBJECTS)
 
 EMPTY:=
-LIBMAKETARGET :=
+LIBMAKETARGET := $(EMPTY)
 
-$(TARGET): override LIBMAKETARGET :=$(EMPTY)
+$(TARGET): override LIBMAKETARGET := $(EMPTY)
 $(TARGET): $(LIBDIR) $(OBJECTS)
-	@echo " Linking... $(OBJECTS)"
+	@echo " Linking..."
 	@echo " $(CC) $^ -o $(TARGET) $(LIB)"; $(CC) $(OBJECTS) -o $(TARGET) $(LIB) -O3
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
-	@echo " Building...$(LIBBUILDDIR)"
+	@echo " Building..."
 	@mkdir -p $(BUILDDIR)
 	@echo " $(CC) $(CFLAGS) $(INC) -c -o $@ $<"; $(CC) $(CFLAGS) $(INC) -c -o $@ $< -save-temps=obj -O3
 
@@ -48,10 +48,6 @@ clean: $(LIBDIR)
 # Tests
 tester:
 	$(CC) $(CFLAGS) test/tester.cpp $(INC) $(LIB) -o bin/tester
-
-# Spikes
-ticket:
-	$(CC) $(CFLAGS) spikes/ticket.cpp $(INC) $(LIB) -o bin/ticket
 
 .PHONY: clean
 .PHONY: $(LIBDIR)
