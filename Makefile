@@ -1,6 +1,7 @@
 CC := clang
 SRCDIR := src
 BUILDDIR := build
+INCDIR := include
 TARGET := bin/run
 SRCEXT := c
 SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
@@ -8,12 +9,14 @@ OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 CFLAGS := 
 LIB := -L lib
 LIBDIR := $(shell find $(LIB) -type d -depth 1)
-LIBINC := $(shell find $(LIB) -type d -name include -depth 2)
-LIBINC := $(addprefix -I,$(LIBINC))
+LIBINCDIR := $(shell find $(LIB) -type d -name include -depth 2)
+LIBINCDIRSTAR := $(addsuffix /*, $(LIBINCDIR))
+LIBINC := $(addprefix -I,$(LIBINCDIR))
 
-LIBSOURCESDIR := $(shell find $(LIB) -type d -name src -depth 2)
-LIBBUILDDIR := $(subst $(SRCDIR),$(BUILDDIR)/%.o,$(LIBSOURCESDIR))
-LIBSOURCES := $(shell find $(LIBSOURCESDIR) -type f -name *.$(SRCEXT))
+LIBSRCDIR := $(shell find $(LIB) -type d -name src -depth 2)
+LIBSRCDIRSTAR := $(addsuffix /*, $(LIBSRCDIR))
+LIBBUILDDIR := $(subst $(SRCDIR),$(BUILDDIR)/%.o,$(LIBSRCDIR))
+LIBSOURCES := $(shell find $(LIBSRCDIR) -type f -name *.$(SRCEXT))
 LIBOBJECTS := $(subst $(SRCDIR),$(BUILDDIR),$(LIBSOURCES:.$(SRCEXT)=.o))
 
 INC := -I include $(LIBINC)
@@ -21,6 +24,9 @@ OBJECTS := $(OBJECTS) $(LIBOBJECTS)
 
 EMPTY:=
 LIBMAKETARGET := $(EMPTY)
+
+LINTER := clang-tidy
+FORMATTER := clang-format
 
 $(TARGET): override LIBMAKETARGET := $(EMPTY)
 $(TARGET): $(LIBDIR) $(OBJECTS)
@@ -48,6 +54,24 @@ clean: $(LIBDIR)
 # Tests
 tester:
 	$(CC) $(CFLAGS) test/tester.cpp $(INC) $(LIB) -o bin/tester
+
+# Run linter on source directories
+lint: gencompilejson
+	@echo " $(LINTER) --config-file=.clang-tidy $(SRCDIR)/* $(INCDIR)/* $(LIBINCDIRSTAR) $(LIBSRCDIRSTAR) -- $(CFLAGS) $(INC)";
+	@$(LINTER) --config-file=.clang-tidy $(SRCDIR)/* $(INCDIR)/* $(LIBINCDIRSTAR) $(LIBSRCDIRSTAR) -- $(CFLAGS) $(INC)
+
+gencompilejson:
+	@compiledb -o build/compile_commands.json make
+# Run formatter on source directories
+format:
+	@echo "$(FORMATTER) -style=file -i $(SRCDIR)/* $(INCDIR)/* $(LIBINCDIRSTAR) $(LIBSRCDIRSTAR)"
+	@$(FORMATTER) -style=file -i $(SRCDIR)/* $(INCDIR)/* $(LIBINCDIRSTAR) $(LIBSRCDIRSTAR)
+
+#format:
+#	find . -iname '*.h' -o -iname '*.c' | xargs clang-format -i
+
+#tidy:
+#	find . -iname '*.h' -o -iname '*.c' | xargs clang-tidy
 
 .PHONY: clean
 .PHONY: $(LIBDIR)
