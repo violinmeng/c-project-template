@@ -4,6 +4,8 @@ Inspired by the [c-projcect-structure](https://github.com/JackWetherell/c-projec
 
 Complete the ability of importing libs through source files.
 
+.clang-format and .clang-tidy ref from [aws-c-common](https://github.com/awslabs/aws-c-common)
+
 Project description
 
 Project image/gif
