@@ -1,4 +1,6 @@
 CC := clang
+LINTER := clang-tidy
+FORMATTER := clang-format
 SRCDIR := src
 BUILDDIR := build
 INCDIR := include
@@ -21,12 +23,8 @@ LIBOBJECTS := $(subst $(SRCDIR),$(BUILDDIR),$(LIBSOURCES:.$(SRCEXT)=.o))
 
 INC := -I include $(LIBINC)
 OBJECTS := $(OBJECTS) $(LIBOBJECTS)
-
 EMPTY:=
 LIBMAKETARGET := $(EMPTY)
-
-LINTER := clang-tidy
-FORMATTER := clang-format
 
 $(TARGET): override LIBMAKETARGET := $(EMPTY)
 $(TARGET): $(LIBDIR) $(OBJECTS)
@@ -37,10 +35,6 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
 	@echo " Building..."
 	@mkdir -p $(BUILDDIR)
 	@echo " $(CC) $(CFLAGS) $(INC) -c -o $@ $<"; $(CC) $(CFLAGS) $(INC) -c -o $@ $< -save-temps=obj -O3
-
-#$(LIBBUILDDIR):
-#	@echo " Building Libs... $@"
-#	@$(MAKE) -C $(shell echo $@ | cut -d "/" -f 1,2)
 
 $(LIBDIR):
 	@echo " Clean Libs... $@"
@@ -66,12 +60,6 @@ gencompilejson:
 format:
 	@echo "$(FORMATTER) -style=file -i $(SRCDIR)/* $(INCDIR)/* $(LIBINCDIRSTAR) $(LIBSRCDIRSTAR)"
 	@$(FORMATTER) -style=file -i $(SRCDIR)/* $(INCDIR)/* $(LIBINCDIRSTAR) $(LIBSRCDIRSTAR)
-
-#format:
-#	find . -iname '*.h' -o -iname '*.c' | xargs clang-format -i
-
-#tidy:
-#	find . -iname '*.h' -o -iname '*.c' | xargs clang-tidy
 
 .PHONY: clean
 .PHONY: $(LIBDIR)
